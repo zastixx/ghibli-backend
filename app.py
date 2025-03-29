@@ -10,9 +10,8 @@ CORS(app)  # Enable CORS for all routes
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
 
-# Fetch API token from Render's environment variables
+# Fetch API token from environment variables
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
-
 if not REPLICATE_API_TOKEN:
     logging.error("Missing REPLICATE_API_TOKEN. Make sure it is set in the environment variables.")
 
@@ -53,9 +52,9 @@ def process_image():
         logging.info("Image processed successfully")
         return jsonify({"output": output})
     except Exception as e:
-        logging.error(f"Error processing image: {str(e)}")
-        return jsonify({"error": "An error occurred while processing the image"}), 500
+        logging.error(f"Error processing image: {str(e)}", exc_info=True)
+        return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    port = int(os.getenv("PORT", 5000))  # Render automatically sets the PORT variable
+    port = int(os.getenv("PORT", 5000))  # Render assigns a dynamic port
     app.run(host='0.0.0.0', port=port)
