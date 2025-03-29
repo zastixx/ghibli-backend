@@ -27,11 +27,6 @@ def process_image():
         logging.error("Image URL is missing in the request")
         return jsonify({"error": "Image URL is required"}), 400
 
-    # Validate image URL (basic check)
-    if not image_url.startswith(('http://', 'https://')):
-        logging.error("Invalid image URL format")
-        return jsonify({"error": "Invalid image URL format"}), 400
-
     input_params = {
         "image": image_url,
         "model": "dev",
@@ -41,7 +36,7 @@ def process_image():
         "megapixels": "1",
         "num_outputs": 1,
         "aspect_ratio": "1:1",
-        "output_format": "webp",
+        "output_format": "jpg",
         "guidance_scale": 10,
         "output_quality": 80,
         "prompt_strength": 0.75,
@@ -54,19 +49,14 @@ def process_image():
             "aaronaftab/mirage-ghibli:166efd159b4138da932522bc5af40d39194033f587d9bdbab1e594119eae3e7f",
             input=input_params
         )
-
-        # Extract the output URL from the response
-        output_urls = response.get('output', [])
-        if isinstance(output_urls, list) and len(output_urls) > 0:
-            output_url = output_urls[0]  # Extract the first URL if output is a list
+        
+        if isinstance(response, dict) and "output" in response and isinstance(response["output"], list):
+            output_url = response["output"][0]  # Extract first image URL
         else:
-            raise ValueError("Unexpected output format from Replicate API")
-
-        logging.info("Image processed successfully")
-        return jsonify({"output": output_url})  # Return the URL to the frontend
-    except replicate.exceptions.ReplicateException as replicate_error:
-        logging.error(f"Replicate API error: {str(replicate_error)}", exc_info=True)
-        return jsonify({"error": f"Replicate API error: {str(replicate_error)}"}), 500
+            raise ValueError("Unexpected response format from Replicate API")
+        
+        logging.info("Image processed successfully: %s", output_url)
+        return jsonify({"output": output_url})
     except Exception as e:
         logging.error(f"Error processing image: {str(e)}", exc_info=True)
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
