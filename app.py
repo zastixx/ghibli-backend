@@ -36,7 +36,7 @@ def process_image():
         "megapixels": "1",
         "num_outputs": 1,
         "aspect_ratio": "1:1",
-        "output_format": "jpg",
+        "output_format": "webp",
         "guidance_scale": 10,
         "output_quality": 80,
         "prompt_strength": 0.75,
@@ -50,10 +50,13 @@ def process_image():
             input=input_params
         )
         
-        if isinstance(response, dict) and "output" in response and isinstance(response["output"], list):
-            output_url = response["output"][0]  # Extract first image URL
+        response_list = list(response)  # Convert generator to list
+        logging.info(f"Full response from Replicate API: {response_list}")
+        
+        if response_list:
+            output_url = response_list[0]  # Extract first image URL
         else:
-            raise ValueError("Unexpected response format from Replicate API")
+            raise ValueError("Empty response from Replicate API")
         
         logging.info("Image processed successfully: %s", output_url)
         return jsonify({"output": output_url})
