@@ -3,6 +3,9 @@ from flask_cors import CORS
 import replicate
 import os
 import logging
+import requests
+from supabase import create_client, Client
+from io import BytesIO
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -10,13 +13,20 @@ CORS(app)  # Enable CORS for all routes
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
 
-# Fetch API token from environment variables
+# Environment Variables
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
-if not REPLICATE_API_TOKEN:
-    logging.error("Missing REPLICATE_API_TOKEN. Make sure it is set in the environment variables.")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_BUCKET = "images"  # Change this to your Supabase bucket name
+
+if not all([REPLICATE_API_TOKEN, SUPABASE_URL, SUPABASE_KEY]):
+    logging.error("Missing required environment variables")
 
 # Initialize Replicate API Client
 replicate_client = replicate.Client(api_token=REPLICATE_API_TOKEN)
+
+# Initialize Supabase Client
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/process', methods=['POST'])
 def process_image():
@@ -49,17 +59,35 @@ def process_image():
             "aaronaftab/mirage-ghibli:166efd159b4138da932522bc5af40d39194033f587d9bdbab1e594119eae3e7f",
             input=input_params
         )
-        
+
         response_list = list(response)  # Convert generator to list
         logging.info(f"Full response from Replicate API: {response_list}")
-        
-        if response_list:
-            output_url = response_list[0]  # Extract first image URL
-        else:
+
+        if not response_list:
             raise ValueError("Empty response from Replicate API")
+
+        output_url = response_list[0]  # Extract first image URL
+
+        # Download image
+        image_response = requests.get(output_url)
+        if image_response.status_code != 200:
+            raise ValueError("Failed to download image from Replicate")
+
+        image_data = BytesIO(image_response.content)
+        image_filename = f"processed_{os.path.basename(output_url)}"
+
+        # Upload to Supabase Storage
+        upload_response = supabase.storage.from_(SUPABASE_BUCKET).upload(image_filename, image_data, {"content-type": "image/webp"})
         
-        logging.info("Image processed successfully: %s", output_url)
-        return jsonify({"output": output_url})
+        if "error" in upload_response:
+            raise ValueError(f"Supabase Upload Error: {upload_response['error']}")
+
+        # Generate public URL for the image
+        supabase_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{image_filename}"
+
+        logging.info(f"Image uploaded to Supabase: {supabase_url}")
+        return jsonify({"output": supabase_url})
+
     except Exception as e:
         logging.error(f"Error processing image: {str(e)}", exc_info=True)
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
