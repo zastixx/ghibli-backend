@@ -27,6 +27,11 @@ def process_image():
         logging.error("Image URL is missing in the request")
         return jsonify({"error": "Image URL is required"}), 400
 
+    # Validate image URL (basic check)
+    if not image_url.startswith(('http://', 'https://')):
+        logging.error("Invalid image URL format")
+        return jsonify({"error": "Invalid image URL format"}), 400
+
     input_params = {
         "image": image_url,
         "model": "dev",
@@ -49,14 +54,20 @@ def process_image():
             "aaronaftab/mirage-ghibli:166efd159b4138da932522bc5af40d39194033f587d9bdbab1e594119eae3e7f",
             input=input_params
         )
-        
+
+        # Check the type of output and handle accordingly
         if isinstance(output, list) and len(output) > 0:
             output_url = output[0]  # Extract the first URL if output is a list
+        elif hasattr(output, 'url'):
+            output_url = output.url  # If output is an object with a 'url' attribute
         else:
             raise ValueError("Unexpected output format from Replicate API")
-        
+
         logging.info("Image processed successfully")
         return jsonify({"output": output_url})
+    except replicate.exceptions.ReplicateException as replicate_error:
+        logging.error(f"Replicate API error: {str(replicate_error)}", exc_info=True)
+        return jsonify({"error": f"Replicate API error: {str(replicate_error)}"}), 500
     except Exception as e:
         logging.error(f"Error processing image: {str(e)}", exc_info=True)
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
