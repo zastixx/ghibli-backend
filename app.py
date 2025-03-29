@@ -6,7 +6,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Initialize Replicate API Client
-replicate_client = replicate.Client(api_token="r8_2x618MiypirxZ3EllA3Ah38IXm4d5A81Zkube")
+replicate_client = replicate.Client(api_token="r8_OV4qZGhlbfrPsLZz9XF5FrBhz5rRTCO2CZKYj")
 
 @app.route('/process', methods=['POST'])
 def process_image():
