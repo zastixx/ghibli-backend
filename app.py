@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import replicate
-import requests
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
-# Initialize the Replicate client
+# Initialize Replicate API Client
 replicate_client = replicate.Client(api_token="r8_2x618MiypirxZ3EllA3Ah38IXm4d5A81Zkube")
 
 @app.route('/process', methods=['POST'])
@@ -18,7 +19,7 @@ def process_image():
     input_params = {
         "image": image_url,
         "model": "dev",
-        "prompt": "GHBLI style photo with keeping detailed",
+        "prompt": "Ghibli style photo with detailed rendering",
         "go_fast": True,
         "lora_scale": 1,
         "megapixels": "1",
@@ -31,7 +32,7 @@ def process_image():
         "extra_lora_scale": 1,
         "num_inference_steps": 28
     }
-    
+
     try:
         output = replicate_client.run(
             "aaronaftab/mirage-ghibli:166efd159b4138da932522bc5af40d39194033f587d9bdbab1e594119eae3e7f",
