@@ -5,7 +5,7 @@ import requests
 app = Flask(__name__)
 
 # Initialize the Replicate client
-replicate_client = replicate.Client(api_token="YOUR_REPLICATE_API_TOKEN")
+replicate_client = replicate.Client(api_token="r8_2x618MiypirxZ3EllA3Ah38IXm4d5A81Zkube")
 
 @app.route('/process', methods=['POST'])
 def process_image():
