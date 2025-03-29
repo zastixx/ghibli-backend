@@ -63,7 +63,7 @@ def process_image():
             raise ValueError("Unexpected output format from Replicate API")
 
         logging.info("Image processed successfully")
-        return jsonify({"output": output_url})
+        return jsonify({"output": output_url})  # Return the URL to the frontend
     except replicate.exceptions.ReplicateException as replicate_error:
         logging.error(f"Replicate API error: {str(replicate_error)}", exc_info=True)
         return jsonify({"error": f"Replicate API error: {str(replicate_error)}"}), 500
