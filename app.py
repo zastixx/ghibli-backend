@@ -50,16 +50,15 @@ def process_image():
     }
 
     try:
-        output = replicate_client.run(
+        response = replicate_client.run(
             "aaronaftab/mirage-ghibli:166efd159b4138da932522bc5af40d39194033f587d9bdbab1e594119eae3e7f",
             input=input_params
         )
 
-        # Check the type of output and handle accordingly
-        if isinstance(output, list) and len(output) > 0:
-            output_url = output[0]  # Extract the first URL if output is a list
-        elif hasattr(output, 'url'):
-            output_url = output.url  # If output is an object with a 'url' attribute
+        # Extract the output URL from the response
+        output_urls = response.get('output', [])
+        if isinstance(output_urls, list) and len(output_urls) > 0:
+            output_url = output_urls[0]  # Extract the first URL if output is a list
         else:
             raise ValueError("Unexpected output format from Replicate API")
 
