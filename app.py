@@ -49,8 +49,14 @@ def process_image():
             "aaronaftab/mirage-ghibli:166efd159b4138da932522bc5af40d39194033f587d9bdbab1e594119eae3e7f",
             input=input_params
         )
+        
+        if isinstance(output, list) and len(output) > 0:
+            output_url = output[0]  # Extract the first URL if output is a list
+        else:
+            raise ValueError("Unexpected output format from Replicate API")
+        
         logging.info("Image processed successfully")
-        return jsonify({"output": output})
+        return jsonify({"output": output_url})
     except Exception as e:
         logging.error(f"Error processing image: {str(e)}", exc_info=True)
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
